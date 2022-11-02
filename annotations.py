@@ -3,6 +3,9 @@ import textwrap
 import re
 import json
  
+# for counting levels in processplandict
+processplandictlevels = 0
+
  # Postgres TCP-H database details
 DB_NAME = "TPC-H"
 DB_USER = "postgres"
@@ -80,12 +83,14 @@ def testexplain(select_text, from_text, where_text):
     results = cur.fetchall()
     moretestresults = json.dumps(results)
     testjsondict = json.loads(moretestresults)
-    # print("here")
-    # print(testjsondict)
+    print("here")
+    print(testjsondict)
+    print("here2")
     # print(testjsondict[0])
     # print(type(testjsondict))
     # print(len(testjsondict))
 
+    processplandictlevels = 0
     testresults = striptoplan(testjsondict)
     # print(testresults)
     # print(len(testresults))
@@ -122,22 +127,52 @@ def testexplain(select_text, from_text, where_text):
 
 def processplandict(dictdata, stringcollector):
     # process the dictionary to retrieve query plan information and put them into a string
+    global processplandictlevels
     for item in dictdata.keys():
         if item=="Plan":
+            processplandictlevels += 1
+            stringcollector += 'LEVEL ' + str(processplandictlevels) + '\n'
             stringcollector = processplandict(dictdata[item], stringcollector)
         elif item=="Node Type":
             print(dictdata[item])
-            stringcollector = stringcollector + str(dictdata[item]) + " "
+            print(processplandictlevels)
+            # stringcollector = stringcollector + str(dictdata[item]) + " "
+            stringcollector = stringcollector + str(dictdata[item]) + '\n'
+        elif item=="Hash Cond":
+            print(dictdata[item])
+            print(processplandictlevels)
+            # stringcollector = stringcollector + str(dictdata[item]) + " "
+            stringcollector = stringcollector + str(dictdata[item]) + '\n'
+        elif item=="Relation Name":
+            print(dictdata[item])
+            print(processplandictlevels)
+            # stringcollector = stringcollector + str(dictdata[item]) + " "
+            stringcollector = stringcollector + str(dictdata[item]) + '\n'
+        elif item=="Join Type":
+            print(dictdata[item])
+            print(processplandictlevels)
+            # stringcollector = stringcollector + str(dictdata[item]) + " "
+            stringcollector = stringcollector + str(dictdata[item]) + '\n'
         elif item=="Plans":
-            anotherdict = striptoplan(dictdata[item])
-            stringcollector = processplandict(anotherdict, stringcollector)
+            processplandictlevels += 1
+            stringcollector += 'LEVEL ' + str(processplandictlevels) + '\n'
+            for thisitem in dictdata[item]:
+                anotherdict = striptoplan(thisitem)
+                stringcollector = processplandict(anotherdict, stringcollector)
+                stringcollector = stringcollector + 'NEXT ITEM\n'
+            # anotherdict = striptoplan(dictdata[item])
+            # stringcollector = processplandict(anotherdict, stringcollector)
 
     return stringcollector
 
 def striptoplan(jsonobject):
     # strip away extra layers of the json object to get to the dictionary for processing
     # print("execute")
+    # global processplandictlevels
     if not isinstance(jsonobject, dict):
         return striptoplan(jsonobject[0])
     else:
+        # processplandictlevels += 1
+        # print("testlevels")
+        # print(processplandictlevels)
         return jsonobject

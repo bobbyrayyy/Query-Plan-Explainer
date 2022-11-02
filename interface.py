@@ -48,6 +48,12 @@ def display():
             from_text = values['-FROM-']
             where_text = values['-WHERE-']
 
+            # THIS IS FOR DEVELOPMENT PURPOSES
+            select_text = 'SELECT AVG(ps_supplycost)' 
+            from_text = 'FROM partsupp P, supplier S'
+            where_text = 'WHERE P.ps_suppkey = S.s_suppkey'
+            # THIS IS FOR DEVELOPMENT PURPOSES
+
             window['-DISPLAY_MSG-'].update('The query to explain is: ')
             window['-DISPLAY_SELECT-'].update(select_text)
             window['-DISPLAY_FROM-'].update(from_text)
